@@ -37,6 +37,7 @@ class FenixClient {
       port: port,
       options: const ChannelOptions(credentials: ChannelCredentials.insecure()),
     );
+
     usersClient = UsersClient(clientChannel);
     messageClient = MessagesClient(clientChannel);
   }
