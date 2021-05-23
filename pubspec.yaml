@@ -1,0 +1,11 @@
+name: fenix
+description: Complete implementation of the Fenix API in Dart
+version: 1.0.0
+repository:
+dependencies:
+  protobuf: ^2.0.0
+  grpc: ^3.0.0
+  uuid: ^3.0.1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
