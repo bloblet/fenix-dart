@@ -1,6 +1,6 @@
 name: fenix
 description: Fenix is a complete implementation of the Fenix GRPC API in dart, with a robust callback system.
-version: 1.0.0
+version: 1.0.1
 repository: https://github.com/bloblet/fenix-dart
 
 dependencies:
