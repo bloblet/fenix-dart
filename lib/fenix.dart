@@ -53,7 +53,8 @@ class FenixClient {
   }
 
   /// Connects to the server via token authentication
-  Future<void> connectWithToken(String token, String tokenID, String userID) async {
+  Future<void> connectWithToken(
+      String token, String tokenID, String userID) async {
     auth = AuthMethod(
       token: Token(token: token, tokenID: tokenID),
       userID: userID,
@@ -66,16 +67,31 @@ class FenixClient {
   }
 
   /// Sends a message.
+  /// Returns void
+  ///
+  /// Arguments:
+  /// message: Message to send
+  ///
+  /// Events:
+  /// [MessageSentEvent] to send message
   void sendMessage(String message) {
     final d = CreateMessage(content: message, authentication: auth);
     callbacks.add(d, MessageSentEvent());
   }
 
   /// Gets 50 messages since [lastMessage].
+  /// Returns a MessageHistory object
   ///
-  /// Calls [RequestMessageHistoryEvent] and [MessageHistoryEvent]
+  /// Arguments:
+  /// lastMessage: Time of the last message
+  ///
+  /// Events:
+  /// [RequestMessageHistoryEvent] before history is requested
+  /// [MessageHistoryEvent] after request
   Future<MessageHistory> getMessageHistory(DateTime lastMessage) async {
-    final d = RequestMessageHistory(authentication: auth, lastMessageTime: Timestamp.fromDateTime(lastMessage));
+    final d = RequestMessageHistory(
+        authentication: auth,
+        lastMessageTime: Timestamp.fromDateTime(lastMessage));
     final nonce = callbacks.add(d, RequestMessageHistoryEvent());
 
     final history = await messageClient.getMessageHistory(d);
@@ -84,6 +100,11 @@ class FenixClient {
   }
 
   /// Requests a new token.
+  /// Returns a Token object
+  ///
+  /// Events:
+  /// [RequestTokenEvent] before request is sent
+  /// [TokenEvent] after token requested and changed.
   Future<Token> requestToken() async {
     final d = auth;
     final nonce = callbacks.add(d, RequestTokenEvent());
@@ -93,15 +114,22 @@ class FenixClient {
     this.auth = AuthMethod(token: token, userID: user.userID);
     callbacks.add(token, TokenEvent(), nonce: nonce);
 
-
     return token;
   }
 
   /// Gets a user.
+  /// Returns a User object
+  ///
+  /// Arguments:
+  /// userID: ID of the user to fetch
+  ///
+  /// Events:
+  /// [RequestUserEvent] before request is sent
+  /// [UserEvent] after user is fetched
   Future<User> getUser(String userID) async {
     final d = RequestUser(
       authentication: auth,
-      userID : userID,
+      userID: userID,
     );
 
     final nonce = callbacks.add(d, RequestUserEvent());
@@ -113,7 +141,18 @@ class FenixClient {
   }
 
   /// Creates a user.
-  Future<UserCreated> createUser(String email, String password, String username) async {
+  /// Returns a UserCreated object and updates [user], [auth], and [token]
+  ///
+  /// Arguments:
+  /// email: Email to use for this account.  Will be verified before messages can be sent
+  /// password: Password for this account.  Should be over 10 characters
+  /// username: Username for this account.  Should be less than 32 characters
+  ///
+  /// Events:
+  /// [RequestUserCreationEvent] before request is sent
+  /// [UserCreatedEvent] after user is created
+  Future<UserCreated> createUser(
+      String email, String password, String username) async {
     final d = RequestUserCreation(
       email: email,
       password: password,
@@ -125,13 +164,18 @@ class FenixClient {
     final userCreated = await usersClient.createUser(d);
     token = token;
     auth = AuthMethod(token: userCreated.token, userID: user.userID);
-
+    user = userCreated.user;
     callbacks.add(user, UserCreatedEvent(), nonce: nonce);
 
     return userCreated;
   }
 
   /// Waits for email verification
+  /// Returns a blank success object after email is verified.
+  ///
+  /// Events:
+  /// [RequestWaitForEmailVerificationEvent] before request is sent
+  /// [EmailVerifiedEvent] after email is verified
   Future<Success> waitForEmailVerification() async {
     final d = auth;
 
@@ -145,6 +189,11 @@ class FenixClient {
   }
 
   /// Resends email verification
+  /// Returns a blank Success object
+  ///
+  /// Events:
+  /// [RequestResendEmailVerificationEvent] before request is sent
+  /// [EmailSentEvent] after email is resent
   Future<Success> resendEmailVerification() async {
     final d = auth;
 
@@ -157,11 +206,16 @@ class FenixClient {
   }
 
   /// Changes MFA status
+  /// Returns a blank Success object
+  ///
+  /// Arguments:
+  /// status:  Desired multifactor authentication status
+  ///
+  /// Events:
+  /// [RequestChangeMFAStatusEvent] before request is sent
+  /// [MFAStatusChangedEvent] after status is updated.
   Future<Success> changeMFAStatus(bool status) async {
-    final d = MFAStatus(
-      authentication: auth,
-      status: status
-    );
+    final d = MFAStatus(authentication: auth, status: status);
 
     final nonce = callbacks.add(d, RequestChangeMFAStatusEvent());
 
@@ -172,9 +226,14 @@ class FenixClient {
   }
 
   /// Gets MFA link
+  /// Returns a MFALink object.
+  ///
+  /// Events:
+  /// [RequestMFALinkEvent] before request is sent
+  /// [MFALinkEvent] after link is received.
   Future<MFALink> getMFALink() async {
     final d = RequestMFALink(
-        authentication: auth,
+      authentication: auth,
     );
 
     final nonce = callbacks.add(d, RequestMFALinkEvent());
@@ -186,7 +245,18 @@ class FenixClient {
   }
 
   /// Changes the user's password
-  Future<UserCreated> changePassword(String old, String email, String newPassword) async {
+  /// Returns a UserCreated object and updates [auth] and [token]
+  ///
+  /// Arguments:
+  /// old:  Old password
+  /// email: Email associated with this account
+  /// newPassword:  New password.  Should be more than 10 characters
+  ///
+  /// Events:
+  /// [RequestChangePasswordEvent] before request is sent
+  /// [PasswordChangedEvent] after request is made and after [auth] and [token] are updated.
+  Future<UserCreated> changePassword(
+      String old, String email, String newPassword) async {
     final d = ChangePasswordRequest(
       authentication: Password(
         email: email,
@@ -209,11 +279,17 @@ class FenixClient {
   }
 
   /// Changes the user's usernames
+  /// Returns a User object, and changes the internal username/discriminator
+  ///
+  /// Arguments:
+  /// username: New username
+  ///
+  /// Events:
+  ///
+  /// [RequestChangeUsernameEvent] before request is sent
+  /// [UsernameChangedEvent] After request is made and after internal user is changed.
   Future<User> changeUsername(String username) async {
-    final d = ChangeUsernameRequest(
-      authentication: auth,
-      username: username
-    );
+    final d = ChangeUsernameRequest(authentication: auth, username: username);
 
     final nonce = callbacks.add(d, RequestChangeUsernameEvent());
 
@@ -225,4 +301,3 @@ class FenixClient {
     return user;
   }
 }
-

@@ -1,7 +1,30 @@
 import 'dart:async';
 import 'package:uuid/uuid.dart';
 
-enum FenixEventType { messageSent, requestMessageHistory, messageHistory, requestToken, token, requestUser, user, requestUserCreation, userCreated, requestWaitForEmailVerification, emailVerified, requestResendEmailVerification, emailSent, requestChangeMFAStatus, mfaStatusChanged, requestMFALink, mfaLink, requestChangePassword, passwordChanged, requestChangeUsername, usernameChanged }
+/// Event types for [Event]
+enum FenixEventType {
+  messageSent,
+  requestMessageHistory,
+  messageHistory,
+  requestToken,
+  token,
+  requestUser,
+  user,
+  requestUserCreation,
+  userCreated,
+  requestWaitForEmailVerification,
+  emailVerified,
+  requestResendEmailVerification,
+  emailSent,
+  requestChangeMFAStatus,
+  mfaStatusChanged,
+  requestMFALink,
+  mfaLink,
+  requestChangePassword,
+  passwordChanged,
+  requestChangeUsername,
+  usernameChanged
+}
 
 /// Base for any type of event.
 abstract class FenixEvent {
@@ -55,11 +78,13 @@ class FenixCallbackManager {
     );
   }
 
+  /// Converts a [FenixEvent] into an [Event]
   Event event(d, FenixEvent t, {nonce = null}) {
     t.fromData(d);
     return t.toEvent(nonce: nonce);
   }
 
+  /// Converts a FenixEvent into an Event and fires it with a nonce
   String add(d, FenixEvent t, {nonce = null}) {
     if (nonce == null) {
       nonce = Uuid().v4();
